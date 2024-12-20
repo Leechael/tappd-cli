@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -19,15 +20,23 @@ func quote(ctx *cli.Context) error {
 	var input []byte
 	var err error
 
-	// Check if input file is specified
-	if inputFile := ctx.String("input"); inputFile != "" {
+	// Check if input is coming from stdin
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		// Data is being piped in
+		input, err = io.ReadAll(os.Stdin)
+		if err != nil {
+			return fmt.Errorf("failed to read from stdin: %w", err)
+		}
+	} else if inputFile := ctx.String("input"); inputFile != "" {
+		// Read from input file
 		input, err = os.ReadFile(inputFile)
 		if err != nil {
 			return fmt.Errorf("failed to read input file: %w", err)
 		}
 	} else {
 		cli.ShowCommandHelp(ctx, "quote")
-		return fmt.Errorf("input file is required")
+		return fmt.Errorf("input is required either from file (-i flag) or stdin")
 	}
 
 	// Initialize client
