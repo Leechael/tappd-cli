@@ -1,0 +1,22 @@
+services:
+  tapp:
+    configs:
+      - source: run.sh
+        target: /root/run.sh
+        mode: 0755
+    volumes:
+      - /var/run/tappd.sock:/var/run/tappd.sock
+    build:
+      dockerfile_inline: |
+        FROM ubuntu:22.04
+        RUN apt-get update && apt-get install -y wget curl
+        WORKDIR /app
+        RUN wget -O /app/tappd-cli https://github.com/Leechael/tappd-cli/releases/download/v0.0.2/tappd-cli-linux-amd64 && \
+            chmod +x /app/tappd-cli
+        CMD ["bash", "/root/run.sh"]
+
+configs:
+  run.sh:
+    content: |
+      #!/bin/bash
+      echo "hi" | /app/tappd-cli quote
